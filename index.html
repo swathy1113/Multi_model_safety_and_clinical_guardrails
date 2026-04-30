@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediSafe — Care Assistant</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230EA5E9'/><path d='M30 50h40M50 30v40' stroke='white' stroke-width='10' stroke-linecap='round'/></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- Reminder Banner -->
+  <div id="reminderBanner" class="reminder-banner hidden">
+    <div class="reminder-icon">🔔</div>
+    <span id="reminderText"></span>
+    <button onclick="dismissReminder()">✕</button>
+  </div>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="brand-name">MediSafe</span>
+        <span class="brand-tag">Care Assistant</span>
+      </div>
+      <div class="status-pill">
+        <span class="status-dot"></span>System Active
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+        <div id="userAvatar" style="width:34px;height:34px;border-radius:50%;background:#0EA5E9;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0"></div>
+        <div style="line-height:1.2">
+          <div id="userName" style="font-weight:700;font-size:.85rem"></div>
+          <div id="userRole" style="font-size:.72rem;opacity:.6"></div>
+        </div>
+        <button onclick="doLogout()" class="logout-btn">Sign out</button>
+      </div>
+    </header>
+
+    <!-- Tab bar -->
+    <nav class="tab-bar">
+      <button class="tab active" onclick="switchTab('medication')" id="tab-medication">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Medication Check
+      </button>
+      <button class="tab" onclick="switchTab('hazard')" id="tab-hazard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Hazard Check
+      </button>
+      <button class="tab" onclick="switchTab('monitor')" id="tab-monitor">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Patient Monitoring
+      </button>
+      <button class="tab" onclick="switchTab('reminders')" id="tab-reminders">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Reminders
+      </button>
+    </nav>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 1: MEDICATION CHECK
+    ══════════════════════════════════════════════ -->
+    <div id="page-medication" class="page active">
+      <div class="layout">
+
+        <!-- Left -->
+        <div class="card">
+          <div class="card-intro">
+            <h1 class="card-title">Medication<br/>Safety Check</h1>
+            <p class="card-desc">Take a photo of any medicine to check it's the right one for your patient.</p>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Who is this for?</label>
+            <div class="select-wrap">
+              <select id="med-patient" class="select-input" onchange="onMedPatientChange()">
+                <option value="" disabled selected>Choose a patient...</option>
+              </select>
+              <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div id="medPatientChip" class="patient-chip hidden">
+              <div class="chip-avatar" id="medPatientAvatar"></div>
+              <div>
+                <div class="chip-name" id="medPatientName"></div>
+                <div class="chip-sub" id="medPatientCond"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Medicine photo</label>
+            <div class="upload-zone" id="medUpload" onclick="document.getElementById('medFile').click()">
+              <input type="file" id="medFile" accept="image/*" class="sr-only" onchange="previewFile('medFile','medPreview','medUploadHint')"/>
+              <div id="medUploadHint" class="upload-hint">
+                <div class="upload-icon-wrap">📷</div>
+                <div class="upload-hint-text">Tap to take photo or upload</div>
+                <div class="upload-hint-sub">JPG · PNG · WEBP</div>
+              </div>
+              <img id="medPreview" class="preview-img hidden" alt=""/>
+            </div>
+          </div>
+
+          <button class="action-btn sky" id="medCheckBtn" onclick="runMedCheck()">
+            <span id="medBtnLabel">Check this medicine</span>
+            <span id="medBtnSpin" class="hidden"><span class="spinner"></span>Checking...</span>
+          </button>
+
+          <div class="stats-row">
+            <div class="stat"><div class="stat-n" id="totalChecks">0</div><div class="stat-l">Checks today</div></div>
+            <div class="stat-sep"></div>
+            <div class="stat"><div class="stat-n green" id="safeCount">0</div><div class="stat-l">Safe</div></div>
+            <div class="stat-sep"></div>
+            <div class="stat"><div class="stat-n red" id="warnCount">0</div><div class="stat-l">Warnings</div></div>
+          </div>
+        </div>
+
+        <!-- Right: Result -->
+        <div class="card result-card">
+          <h2 class="panel-title">Result</h2>
+          <div id="medIdle" class="idle-state">
+            <div class="idle-art">💊</div>
+            <p class="idle-msg">Select a patient and upload a medicine photo to run a safety check.</p>
+          </div>
+          <div id="medScanning" class="scanning-state hidden">
+            <div class="scan-anim"><div class="scan-bar"></div></div>
+            <p class="scan-lbl">Reading medicine packaging...</p>
+            <div class="scan-steps">
+              <div class="step" id="ms1"><span class="step-dot"></span>Reading the label</div>
+              <div class="step" id="ms2"><span class="step-dot"></span>Checking care plan</div>
+              <div class="step" id="ms3"><span class="step-dot"></span>Getting result</div>
+            </div>
+          </div>
+          <div id="medResult" class="hidden">
+            <div id="medStatusCard" class="status-card"></div>
+            <div id="medDetected" class="detected-line"></div>
+            <div id="medConsult" class="consult-box hidden">
+              <p id="medConsultQ" class="consult-q"></p>
+              <div class="consult-btns">
+                <button class="btn-yes" onclick="medConsultYes()">✓ Yes, doctor prescribed it</button>
+                <button class="btn-no"  onclick="medConsultNo()">✕ No / Not sure</button>
+              </div>
+            </div>
+            <div id="medDoctorBox" class="doctor-box hidden"></div>
+            <button class="again-btn" onclick="resetMed()">↺ Check another medicine</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Patients table -->
+      <section class="data-section">
+        <div class="section-head">
+          <h2 class="section-title">Registered Patients</h2>
+          <span class="badge sky" id="patientCount">—</span>
+        </div>
+        <div class="table-wrap">
+          <table class="dtable">
+            <thead><tr><th>Name</th><th>Condition</th><th>Prescribed Medicines</th></tr></thead>
+            <tbody id="patientsBody"><tr><td colspan="3" class="empty-row">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 2: HAZARD CHECK
+    ══════════════════════════════════════════════ -->
+    <div id="page-hazard" class="page hidden">
+      <div class="layout">
+
+        <!-- Left -->
+        <div class="card">
+          <div class="card-intro">
+            <h1 class="card-title">Room<br/>Safety Scan</h1>
+            <p class="card-desc">Take a photo of the patient's room or environment and we'll check for any fall risks or hazards.</p>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Room / area photo</label>
+            <div class="upload-zone" id="hazUpload" onclick="document.getElementById('hazFile').click()">
+              <input type="file" id="hazFile" accept="image/*" class="sr-only" onchange="previewFile('hazFile','hazPreview','hazUploadHint')"/>
+              <div id="hazUploadHint" class="upload-hint">
+                <div class="upload-icon-wrap">🏠</div>
+                <div class="upload-hint-text">Take a photo of the room</div>
+                <div class="upload-hint-sub">Show the walking areas, floor, and lighting</div>
+              </div>
+              <img id="hazPreview" class="preview-img hidden" alt=""/>
+            </div>
+          </div>
+
+          <button class="action-btn amber" id="hazBtn" onclick="runHazardCheck()">
+            <span id="hazBtnLabel">Scan for hazards</span>
+            <span id="hazBtnSpin" class="hidden"><span class="spinner"></span>Scanning...</span>
+          </button>
+
+          <div class="info-box amber-box">
+            <div class="info-box-title">What we check for</div>
+            <div class="info-box-items">
+              <span class="info-chip">Loose rugs</span>
+              <span class="info-chip">Wet floors</span>
+              <span class="info-chip">Poor lighting</span>
+              <span class="info-chip">Clutter in walkways</span>
+              <span class="info-chip">Trailing cables</span>
+              <span class="info-chip">Obstacles near bed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Hazard Result -->
+        <div class="card result-card">
+          <h2 class="panel-title">Hazard Report</h2>
+          <div id="hazIdle" class="idle-state">
+            <div class="idle-art">🏠</div>
+            <p class="idle-msg">Upload a photo of the room to scan for hazards and fall risks.</p>
+          </div>
+          <div id="hazScanning" class="scanning-state hidden">
+            <div class="scan-anim"><div class="scan-bar"></div></div>
+            <p class="scan-lbl">Analysing room for hazards...</p>
+          </div>
+          <div id="hazResult" class="hidden">
+            <div id="hazStatusCard" class="status-card"></div>
+            <div id="hazAlertBox" class="haz-alert hidden"></div>
+            <div id="hazHazardsList" class="list-section hidden">
+              <div class="list-section-title">⚠ Hazards found</div>
+              <div id="hazHazardsContent"></div>
+            </div>
+            <div id="hazRecsList" class="list-section hidden">
+              <div class="list-section-title">✔ Actions to take</div>
+              <div id="hazRecsContent"></div>
+            </div>
+            <button class="again-btn" onclick="resetHaz()">↺ Scan another area</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Hazard log -->
+      <section class="data-section">
+        <div class="section-head">
+          <h2 class="section-title">Recent Hazard Scans</h2>
+          <span class="badge amber">Today's log</span>
+        </div>
+        <div class="table-wrap">
+          <table class="dtable">
+            <thead><tr><th>Time</th><th>Risk Level</th><th>Summary</th></tr></thead>
+            <tbody id="hazLog"><tr><td colspan="3" class="empty-row">No scans yet today</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 3: PATIENT MONITORING
+    ══════════════════════════════════════════════ -->
+    <div id="page-monitor" class="page hidden">
+
+      <!-- Sub-tabs -->
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchMonitorTab('nutrition')" id="stab-nutrition">🍽 Nutrition Tracking</button>
+        <button class="sub-tab" onclick="switchMonitorTab('wound')" id="stab-wound">🩹 Wound Monitoring</button>
+      </div>
+
+      <!-- Nutrition -->
+      <div id="monitor-nutrition" class="layout">
+        <div class="card">
+          <div class="card-intro">
+            <h1 class="card-title">Meal<br/>Tracking</h1>
+            <p class="card-desc">Upload a photo of the plate before and after the meal. We'll compare both and tell you exactly how much was eaten.</p>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Patient</label>
+            <div class="select-wrap">
+              <select id="nut-patient" class="select-input">
+                <option value="" disabled selected>Choose a patient...</option>
+              </select>
+              <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Meal type</label>
+            <div class="select-wrap">
+              <select id="nut-mealtype" class="select-input">
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch" selected>Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
+              </select>
+              <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+
+          <!-- Two upload zones side by side -->
+          <div class="field-group">
+            <label class="field-label">Before &amp; after photos</label>
+            <div class="two-upload-row">
+              <div class="two-upload-col">
+                <div class="upload-label-tag">Before meal</div>
+                <div class="upload-zone upload-zone-sm" id="nutBeforeZone" onclick="document.getElementById('nutBeforeFile').click()">
+                  <input type="file" id="nutBeforeFile" accept="image/*" class="sr-only" onchange="previewFile('nutBeforeFile','nutBeforePreview','nutBeforeHint')"/>
+                  <div id="nutBeforeHint" class="upload-hint upload-hint-sm">
+                    <div class="upload-icon-wrap" style="font-size:1.4rem">🍽</div>
+                    <div class="upload-hint-text" style="font-size:.78rem">Full plate</div>
+                  </div>
+                  <img id="nutBeforePreview" class="preview-img hidden" alt=""/>
+                </div>
+              </div>
+              <div class="two-upload-arrow">→</div>
+              <div class="two-upload-col">
+                <div class="upload-label-tag after">After meal</div>
+                <div class="upload-zone upload-zone-sm" id="nutAfterZone" onclick="document.getElementById('nutAfterFile').click()">
+                  <input type="file" id="nutAfterFile" accept="image/*" class="sr-only" onchange="previewFile('nutAfterFile','nutAfterPreview','nutAfterHint')"/>
+                  <div id="nutAfterHint" class="upload-hint upload-hint-sm">
+                    <div class="upload-icon-wrap" style="font-size:1.4rem">🍽</div>
+                    <div class="upload-hint-text" style="font-size:.78rem">Eaten plate</div>
+                  </div>
+                  <img id="nutAfterPreview" class="preview-img hidden" alt=""/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="action-btn green" id="nutBtn" onclick="runNutritionCheck()">
+            <span id="nutBtnLabel">Compare &amp; analyse</span>
+            <span id="nutBtnSpin" class="hidden"><span class="spinner"></span>Analysing...</span>
+          </button>
+        </div>
+
+        <div class="card result-card">
+          <h2 class="panel-title">Nutrition Report</h2>
+          <div id="nutIdle" class="idle-state">
+            <div class="idle-art">🍽</div>
+            <p class="idle-msg">Upload a before photo and an after photo of the plate to track how much was eaten.</p>
+          </div>
+          <div id="nutScanning" class="scanning-state hidden">
+            <div class="scan-anim"><div class="scan-bar"></div></div>
+            <p class="scan-lbl">Comparing before &amp; after photos...</p>
+          </div>
+          <div id="nutResult" class="hidden">
+            <div id="nutStatusCard" class="status-card"></div>
+            <div id="nutProgress" class="progress-section"></div>
+            <div id="nutDetails" class="details-box"></div>
+            <button class="again-btn" onclick="resetNut()">↺ Log another meal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wound -->
+      <div id="monitor-wound" class="layout hidden">
+        <div class="card">
+          <div class="card-intro">
+            <h1 class="card-title">Wound<br/>Check</h1>
+            <p class="card-desc">Upload a previous wound photo and today's photo to compare healing progress. Today's photo is saved automatically for future checks.</p>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Patient</label>
+            <div class="select-wrap">
+              <select id="wound-patient" class="select-input" onchange="loadWoundHistory()">
+                <option value="" disabled selected>Choose a patient...</option>
+              </select>
+              <svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+
+          <div id="prevWoundInfo" class="prev-check-box hidden">
+            <div class="prev-check-label">Saved record found</div>
+            <div class="prev-check-date" id="prevWoundDate"></div>
+            <div class="prev-check-sub">Leave "Previous photo" empty to use this saved record automatically.</div>
+          </div>
+          <div id="noWoundHistory" class="prev-check-box first-check hidden">
+            <div class="prev-check-label">No previous records yet</div>
+            <div class="prev-check-sub">Today's photo will be saved as the baseline for future comparisons.</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Wound photos</label>
+            <div class="two-upload-row">
+              <div class="two-upload-col">
+                <div class="upload-label-tag" style="font-size:.68rem">Previous wound<br/><span style="font-weight:400;text-transform:none;font-size:.65rem">(optional)</span></div>
+                <div class="upload-zone upload-zone-sm" onclick="document.getElementById('woundPrevFile').click()">
+                  <input type="file" id="woundPrevFile" accept="image/*" class="sr-only" onchange="previewFile('woundPrevFile','woundPrevPreview','woundPrevHint')"/>
+                  <div id="woundPrevHint" class="upload-hint upload-hint-sm">
+                    <div class="upload-icon-wrap" style="font-size:1.4rem">🩹</div>
+                    <div class="upload-hint-text" style="font-size:.78rem">Previous photo</div>
+                  </div>
+                  <img id="woundPrevPreview" class="preview-img hidden" alt=""/>
+                </div>
+              </div>
+              <div class="two-upload-arrow">→</div>
+              <div class="two-upload-col">
+                <div class="upload-label-tag after">Today's wound <span style="color:var(--red);font-size:.68rem">*required</span></div>
+                <div class="upload-zone upload-zone-sm" onclick="document.getElementById('woundFile').click()">
+                  <input type="file" id="woundFile" accept="image/*" class="sr-only" onchange="previewFile('woundFile','woundPreview','woundHint')"/>
+                  <div id="woundHint" class="upload-hint upload-hint-sm">
+                    <div class="upload-icon-wrap" style="font-size:1.4rem">🩹</div>
+                    <div class="upload-hint-text" style="font-size:.78rem">Today's photo</div>
+                  </div>
+                  <img id="woundPreview" class="preview-img hidden" alt=""/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Notes (optional)</label>
+            <textarea id="wound-notes" class="text-area" rows="2" placeholder="e.g. Changed dressing, some redness noted yesterday"></textarea>
+          </div>
+
+          <button class="action-btn rose" id="woundBtn" onclick="runWoundCheck()">
+            <span id="woundBtnLabel">Assess &amp; compare</span>
+            <span id="woundBtnSpin" class="hidden"><span class="spinner"></span>Comparing...</span>
+          </button>
+        </div>
+
+        <div class="card result-card">
+          <h2 class="panel-title">Wound Assessment</h2>
+          <div id="woundIdle" class="idle-state">
+            <div class="idle-art">🩹</div>
+            <p class="idle-msg">Select a patient and upload today's wound photo. Add a previous photo or the system will use the last saved record automatically.</p>
+          </div>
+          <div id="woundScanning" class="scanning-state hidden">
+            <div class="scan-anim"><div class="scan-bar"></div></div>
+            <p class="scan-lbl">Comparing wound photos...</p>
+          </div>
+          <div id="woundResult" class="hidden">
+            <div id="woundComparisonBadge" class="comparison-badge hidden"></div>
+            <div id="woundStatusCard" class="status-card"></div>
+            <div id="woundDetails" class="details-box"></div>
+            <div id="woundNurseAlert" class="nurse-alert hidden"></div>
+            <button class="again-btn" onclick="resetWound()">↺ Assess another wound</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monitoring log -->
+      <section class="data-section">
+        <div class="section-head">
+          <h2 class="section-title">Monitoring Log</h2>
+          <span class="badge green">Today</span>
+        </div>
+        <div class="table-wrap">
+          <table class="dtable">
+            <thead><tr><th>Time</th><th>Patient</th><th>Type</th><th>Result</th></tr></thead>
+            <tbody id="monitorLog"><tr><td colspan="4" class="empty-row">No entries yet today</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 4: REMINDERS
+    ══════════════════════════════════════════════ -->
+    <div id="page-reminders" class="page hidden">
+      <section class="data-section">
+        <div class="section-head">
+          <h2 class="section-title">Medication Reminders</h2>
+          <span class="badge sky">Alert 10 min before</span>
+        </div>
+        <div class="reminder-form-row">
+          <div class="rf-field">
+            <label class="field-label">Patient</label>
+            <div class="select-wrap"><select id="rem-patient" class="select-input"><option value="" disabled selected>Select...</option></select><svg class="select-caret" width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="6,9 12,15 18,9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+          </div>
+          <div class="rf-field rf-grow">
+            <label class="field-label">Medicine &amp; dose</label>
+            <input type="text" id="rem-med" class="text-input" placeholder="e.g. Paracetamol 500mg"/>
+          </div>
+          <div class="rf-field rf-sm">
+            <label class="field-label">Time</label>
+            <input type="time" id="rem-time" class="text-input"/>
+          </div>
+          <button class="add-reminder-btn" onclick="addMedTime()">Add reminder</button>
+        </div>
+        <div class="table-wrap">
+          <table class="dtable">
+            <thead><tr><th>Patient</th><th>Medicine</th><th>Time</th></tr></thead>
+            <tbody id="scheduleBody"><tr><td colspan="3" class="empty-row">No reminders set yet</td></tr></tbody>
+          </table>
+        </div>
+        <div id="reminderLog" class="reminder-log hidden"></div>
+      </section>
+    </div>
+
+  </div><!-- /app -->
+
+  <script src="script.js"></script>
+</body>
+</html>
